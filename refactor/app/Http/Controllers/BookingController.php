@@ -29,23 +29,28 @@ class BookingController extends Controller
         $this->repository = $bookingRepository;
     }
 
+    //======================NO TRY CATCH is USED in All APIS============================================//
+
     /**
      * @param Request $request
      * @return mixed
      */
     public function index(Request $request)
     {
-        if($user_id = $request->get('user_id')) {
+    try {
+        $user = auth()->user();
 
-            $response = $this->repository->getUsersJobs($user_id);
-
-        }
-        elseif($request->__authenticatedUser->user_type == env('ADMIN_ROLE_ID') || $request->__authenticatedUser->user_type == env('SUPERADMIN_ROLE_ID'))
-        {
+        if ($user->user_type == env('ADMIN_ROLE_ID') || $user->user_type == env('SUPERADMIN_ROLE_ID')) {
             $response = $this->repository->getAll($request);
+        } else {
+            $user_id = $request->get('user_id');
+            $response = $this->repository->getUsersJobs($user_id);
         }
-
+    
         return response($response);
+    } catch (\Throwable $th) {
+        //throw $th;
+    }
     }
 
     /**
@@ -54,9 +59,13 @@ class BookingController extends Controller
      */
     public function show($id)
     {
+      try {
         $job = $this->repository->with('translatorJobRel.user')->find($id);
 
         return response($job);
+      } catch (\Throwable $th) {
+        //throw $th;
+      }
     }
 
     /**
@@ -65,11 +74,15 @@ class BookingController extends Controller
      */
     public function store(Request $request)
     {
-        $data = $request->all();
+       try {
+        $data = $request->all(); //validations are not used. proper requests should always implement this method.
 
-        $response = $this->repository->store($request->__authenticatedUser, $data);
+        $response = $this->repository->store(auth()->user(), $data);
 
         return response($response);
+       } catch (\Throwable $th) {
+        //throw $th;
+       }
 
     }
 
@@ -80,11 +93,15 @@ class BookingController extends Controller
      */
     public function update($id, Request $request)
     {
-        $data = $request->all();
-        $cuser = $request->__authenticatedUser;
+      try {
+        $data = $request->all(); //validations are not used. proper requests should always implement this method.
+        $cuser = auth()->user();
         $response = $this->repository->updateJob($id, array_except($data, ['_token', 'submit']), $cuser);
 
         return response($response);
+      } catch (\Throwable $th) {
+        //throw $th;
+      }
     }
 
     /**
@@ -93,12 +110,17 @@ class BookingController extends Controller
      */
     public function immediateJobEmail(Request $request)
     {
-        $adminSenderEmail = config('app.adminemail');
-        $data = $request->all();
+   try {
+         // extra line below
+        // $adminSenderEmail = config('app.adminemail'); 
+        $data = $request->all(); //validations are not used. proper requests should always implement this method.
 
         $response = $this->repository->storeJobEmail($data);
 
         return response($response);
+   } catch (\Throwable $th) {
+    //throw $th;
+   }
     }
 
     /**
@@ -107,14 +129,20 @@ class BookingController extends Controller
      */
     public function getHistory(Request $request)
     {
-        if($user_id = $request->get('user_id')) {
+try {
+    $user_id = $request->get('user_id');
+    if($user_id) {
 
-            $response = $this->repository->getUsersJobsHistory($user_id, $request);
-            return response($response);
-        }
-
-        return null;
+        $response = $this->repository->getUsersJobsHistory($user_id, $request);
+        return response($response);
     }
+
+    return response()->json(['message' => 'User ID not provided'], 400);
+} catch (\Throwable $th) {
+    //throw $th;
+}
+    }
+
 
     /**
      * @param Request $request
@@ -122,22 +150,30 @@ class BookingController extends Controller
      */
     public function acceptJob(Request $request)
     {
-        $data = $request->all();
-        $user = $request->__authenticatedUser;
+ try {
+    $data = $request->all();
+    $user = auth()->user();
 
-        $response = $this->repository->acceptJob($data, $user);
+    $response = $this->repository->acceptJob($data, $user);
 
-        return response($response);
+    return response($response);
+ } catch (\Throwable $th) {
+    //throw $th;
+ }
     }
 
     public function acceptJobWithId(Request $request)
     {
-        $data = $request->get('job_id');
-        $user = $request->__authenticatedUser;
+  try {
+    $data = $request->get('job_id');
+    $user = auth()->user();
 
-        $response = $this->repository->acceptJobWithId($data, $user);
+    $response = $this->repository->acceptJobWithId($data, $user);
 
-        return response($response);
+    return response($response);
+  } catch (\Throwable $th) {
+    //throw $th;
+  }
     }
 
     /**
@@ -146,12 +182,16 @@ class BookingController extends Controller
      */
     public function cancelJob(Request $request)
     {
+    try {
         $data = $request->all();
-        $user = $request->__authenticatedUser;
+        $user = auth()->user();
 
         $response = $this->repository->cancelJobAjax($data, $user);
 
         return response($response);
+    } catch (\Throwable $th) {
+        //throw $th;
+    }
     }
 
     /**
@@ -160,21 +200,29 @@ class BookingController extends Controller
      */
     public function endJob(Request $request)
     {
-        $data = $request->all();
+try {
+    $data = $request->all();
 
-        $response = $this->repository->endJob($data);
+    $response = $this->repository->endJob($data);
 
-        return response($response);
+    return response($response);
+} catch (\Throwable $th) {
+    //throw $th;
+}
 
     }
 
     public function customerNotCall(Request $request)
     {
+    try {
         $data = $request->all();
 
         $response = $this->repository->customerNotCall($data);
 
         return response($response);
+    } catch (\Throwable $th) {
+        //throw $th;
+    }
 
     }
 
@@ -184,17 +232,22 @@ class BookingController extends Controller
      */
     public function getPotentialJobs(Request $request)
     {
-        $data = $request->all();
-        $user = $request->__authenticatedUser;
+ try {
+           // $data = $request->all(); extra line
+           $user = auth()->user();
 
-        $response = $this->repository->getPotentialJobs($user);
-
-        return response($response);
+           $response = $this->repository->getPotentialJobs($user);
+   
+           return response($response);
+ } catch (\Throwable $th) {
+    //throw $th;
+ }
     }
 
     public function distanceFeed(Request $request)
     {
-        $data = $request->all();
+       try {
+        $data = $request->all(); //validation request not used
 
         if (isset($data['distance']) && $data['distance'] != "") {
             $distance = $data['distance'];
@@ -252,24 +305,35 @@ class BookingController extends Controller
         }
 
         return response('Record updated!');
+       } catch (\Throwable $th) {
+        //throw $th;
+       }
     }
 
     public function reopen(Request $request)
     {
+      try {
         $data = $request->all();
         $response = $this->repository->reopen($data);
 
         return response($response);
+      } catch (\Throwable $th) {
+        //throw $th;
+      }
     }
 
     public function resendNotifications(Request $request)
     {
+      try {
         $data = $request->all();
         $job = $this->repository->find($data['jobid']);
         $job_data = $this->repository->jobToData($job);
         $this->repository->sendNotificationTranslator($job, $job_data, '*');
 
         return response(['success' => 'Push sent']);
+      } catch (\Throwable $th) {
+        //throw $th;
+      }
     }
 
     /**
@@ -279,16 +343,20 @@ class BookingController extends Controller
      */
     public function resendSMSNotifications(Request $request)
     {
-        $data = $request->all();
-        $job = $this->repository->find($data['jobid']);
-        $job_data = $this->repository->jobToData($job);
+  try {
+    $data = $request->all();
+    $job = $this->repository->find($data['jobid']);
+    // $job_data = $this->repository->jobToData($job); extra line
 
-        try {
-            $this->repository->sendSMSNotificationToTranslator($job);
-            return response(['success' => 'SMS sent']);
-        } catch (\Exception $e) {
-            return response(['success' => $e->getMessage()]);
-        }
+    try {
+        $this->repository->sendSMSNotificationToTranslator($job);
+        return response(['success' => 'SMS sent']);
+    } catch (\Exception $e) {
+        return response(['success' => $e->getMessage()]);
+    }
+  } catch (\Throwable $th) {
+    //throw $th;
+  }
     }
 
 }
